@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { useInterval } from "../useInterval/useInterval";
+import { useEffect, useState } from "react";
+import { useInterval } from "./useInterval";
 
 export function useTimerCounter() {
   const [hours, setHours] = useState(0);

@@ -1,4 +1,4 @@
-import { useTimerCounter } from "./hooks/useTimerCounter/useTimerCounter";
+import { useTimerCounter } from "./hooks/useTimerCounter";
 
 function App() {
   const { seconds, minutes, hours, startTimer, stopTimer } = useTimerCounter()
