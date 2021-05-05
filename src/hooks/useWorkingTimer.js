@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useInterval } from "./useInterval";
 
-export function useTimerCounter() {
+export function useWorkingTimer() {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -37,8 +37,8 @@ export function useTimerCounter() {
     seconds,
     minutes,
     hours,
+    isCounting,
     startTimer,
-    stopTimer,
-    isCounting
+    stopTimer
   };
 }

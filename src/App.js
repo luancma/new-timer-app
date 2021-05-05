@@ -1,18 +1,35 @@
-import { useTimerCounter } from "./hooks/useTimerCounter";
+import { Box } from "grommet";
+import { useWorkingTimer } from "./hooks/useWorkingTimer";
+
+const ourJSON = [
+  {
+    id: 1,
+    userName: 'Usuário 1',
+    expectedHours: "08:00:00",
+  }
+]
 
 function App() {
-  const { seconds, minutes, hours, startTimer, stopTimer } = useTimerCounter()
+  const { seconds, minutes, hours, startTimer, stopTimer } = useWorkingTimer();
   const formatText = (time) => `${time < 10 ? `0${time}` : time}`;
 
   return (
-    <div>
-      <button onClick={startTimer}>Start</button>
-      <button onClick={stopTimer}>Stop</button>
-      <h1>{formatText(hours)}</h1>
-      <h1>{formatText(minutes)}</h1>
-      <h1>{formatText(seconds)}</h1>
-    </div>
-  )
+    <Box direction="column" justify="center" align="center">
+      <Box
+        direction="row"
+        justify="center"
+        animation={{
+          type: "fadeIn",
+          delay: 0,
+          duration: 1000,
+        }}
+      >
+        <h1>{formatText(seconds)}:{formatText(minutes)}:{formatText(hours)}</h1>
+      </Box>
+
+      <h1>Bem vindo, Usuário</h1>
+    </Box>
+  );
 }
 
 export default App;
