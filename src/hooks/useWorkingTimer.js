@@ -9,6 +9,8 @@ export function useWorkingTimer() {
 
   const startTimer = () => setIsCounting(true);
 
+  const pauseTimer = () => setIsCounting(false);
+
   const stopTimer = () => {
     setIsCounting(false)
     setSeconds(0)
@@ -39,6 +41,7 @@ export function useWorkingTimer() {
     hours,
     isCounting,
     startTimer,
-    stopTimer
+    stopTimer,
+    pauseTimer
   };
 }
