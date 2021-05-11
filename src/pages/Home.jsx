@@ -1,32 +1,19 @@
-import {
-  Box,
-  Button,
-  Heading,
-  Paragraph,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-  Text,
-} from "grommet";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { Box, Heading, Paragraph, Text } from "grommet";
 import { useLunchTimer } from "../hooks/useLunchTimer";
 import { useWorkingTimer } from "../hooks/useWorkingTimer";
-import { Cafeteria, Play, Stop } from "grommet-icons";
-import { useCallback, useContext, useEffect, useState } from "react";
 import { ModalContext } from "../context/ModalContext";
+import { LunchButton } from "../components/LunchButton";
+import { JobButton } from "../components/JobButton";
+import { WorkHistory } from "../components/WorkHistory";
+import { formatTimer } from "../utils/formatTimer";
+import { TimerCounter } from "../components/TimerCounter";
 
 export function Home() {
   const modalContext = useContext(ModalContext);
 
-  const {
-    seconds,
-    minutes,
-    hours,
-    startTimer,
-    stopTimer,
-    isCounting,
-  } = useWorkingTimer();
+  const { seconds, minutes, hours, startTimer, stopTimer, isCounting } =
+    useWorkingTimer();
 
   const {
     seconds: lunchSeconds,
@@ -43,13 +30,11 @@ export function Home() {
     expectedHours: "08:00:00",
     lunch: {
       start: 0,
-      end: 0,
-      haveLunch: false,
+      exit: 0,
     },
     job: {
       start: 0,
       exit: 0,
-      workedOurs: 0,
     },
     haveFinished: false,
   });
@@ -64,63 +49,120 @@ export function Home() {
     });
   };
 
-  const handleSetExitJob = () => {
-    return setJobDetails({
-      ...jobDetails,
-      job: {
-        ...jobDetails.job,
-        exit: `${new Date().getHours()}:${new Date().getMinutes()}`,
-      },
-    });
-  };
-
   const handleSetStartLunch = () => {
-    return setJobDetails({
+    setJobDetails({
       ...jobDetails,
-      lucnh: {
-        ...jobDetails.lucnh,
-        start: `${new Date().getHours()}:${new Date().getMinutes()}`,
+      lunch: {
+        ...jobDetails.lunch,
+        start: `${new Date().getHours()}:${
+          new Date().getMinutes() < 10
+            ? `0${new Date().getMinutes()}`
+            : new Date().getMinutes()
+        }`,
       },
     });
+    startLunchTimer();
   };
 
   const handleSetExitLunch = () => {
-    return setJobDetails({
+    setJobDetails({
       ...jobDetails,
-      lucnh: {
-        ...jobDetails.lucnh,
-        exit: `${new Date().getHours()}:${new Date().getMinutes()}`,
+      lunch: {
+        ...jobDetails.lunch,
+        exit: `${new Date().getHours()}:${formatTimer(
+          new Date().getMinutes()
+        )}`,
       },
     });
   };
 
-  const formatText = (time) => `${time < 10 ? `0${time}` : time}`;
-
   const handleFinishJob = () => {
-    return modalContext.handleOpenModal();
+    return modalContext.handleOpenModal(
+      "Você tem certeza que deseja finalizar seu expediente?",
+      "work"
+    );
+  };
+
+  const handleFinishLunch = () => {
+    return modalContext.handleOpenModal(
+      "Você tem certeza que deseja finalizar seu horário de almoço?",
+      "lunch"
+    );
   };
 
   const setFunctionToCloseModal = useCallback(() => {
-    if (modalContext.alertModal.isOpen) {
+    if (
+      modalContext.alertModal.isOpen &&
+      modalContext.alertModal.type === "work"
+    ) {
       const closeModal = () => {
-        handleSetExitJob();
+        if (jobDetails.lunch.start && isCountingLunchTime) {
+          setJobDetails({
+            ...jobDetails,
+            lunch: {
+              ...jobDetails.lunch,
+              exit: `${new Date().getHours()}:${formatTimer(
+                new Date().getMinutes()
+              )}`,
+            },
+            job: {
+              ...jobDetails.job,
+              exit: `${new Date().getHours()}:${formatTimer(
+                new Date().getMinutes()
+              )}`,
+            },
+          });
+          stopTimer();
+          stopLunchTimer();
+          return modalContext.handleCloseModal();
+        }
+
+        setJobDetails({
+          ...jobDetails,
+          job: {
+            ...jobDetails.job,
+            exit: `${new Date().getHours()}:${formatTimer(
+              new Date().getMinutes()
+            )}`,
+          },
+        });
         stopTimer();
+        return modalContext.handleCloseModal();
+      };
+      return modalContext.setCloseFunctionModal(closeModal);
+    }
+    if (
+      modalContext.alertModal.isOpen &&
+      modalContext.alertModal.type === "lunch"
+    ) {
+      const closeModal = () => {
+        handleSetExitLunch();
+        stopLunchTimer();
         modalContext.handleCloseModal();
       };
       return modalContext.setCloseFunctionModal(closeModal);
     }
-  }, [modalContext.alertModal.isOpen]);
+  }, [
+    jobDetails.job,
+    jobDetails.lunch.start,
+    modalContext.alertModal.isOpen,
+    modalContext.alertModal.type,
+    isCountingLunchTime,
+    jobDetails,
+  ]);
 
   function startWorkTime() {
     handleSetStartJob();
     return startTimer();
   }
 
+  const validateLunchTime = () =>
+    !isCounting || (jobDetails.lunch.start && !isCountingLunchTime);
+
   useEffect(() => {
     return setFunctionToCloseModal();
   }, [setFunctionToCloseModal]);
 
-  console.log({ jobDetails });
   return (
     <Box
       direction="column"
@@ -132,186 +174,49 @@ export function Home() {
         duration: 1000,
       }}
     >
-      <Box width="1200px">
-        <Box direction="row" justify="end" fill="horizontal">
-          <Box>
-            <Box direction="row" justify="center">
-              <Paragraph
-                margin="none"
-                alignSelf="start"
-                fill="horizontal"
-                style={{ flex: 1 }}
-              >
-                Carga horária:
-              </Paragraph>
-              <Text margin="none" textAlign="center">
-                {jobDetails.expectedHours}
-              </Text>
-            </Box>
-
-            {isCounting && (
-              <Box direction="row" justify="center">
-                <Paragraph
-                  margin="none"
-                  alignSelf="start"
-                  fill="horizontal"
-                  style={{ flex: 1 }}
-                >
-                  Horas trabalhadas:
-                </Paragraph>
-                <Text margin="none" textAlign="center">
-                  {formatText(hours)}:{formatText(minutes)}:
-                  {formatText(seconds)}
-                </Text>
-              </Box>
-            )}
-            {isCountingLunchTime && (
-              <Box direction="row" justify="center">
-                <Paragraph
-                  margin="none"
-                  alignSelf="start"
-                  fill="horizontal"
-                  style={{ flex: 1 }}
-                >
-                  Horário de almoço:
-                </Paragraph>
-                <Text margin="none" textAlign="center">
-                  {formatText(lunchHours)}:{formatText(lunchMinutes)}:
-                  {formatText(lunchSeconds)}
-                </Text>
-              </Box>
-            )}
-          </Box>
-        </Box>
-
-        <Heading textAlign="center">Bem vindo, {jobDetails.userName}</Heading>
-
+      <Box className="container_wrapper">
+        <TimerCounter
+          expectedHours={jobDetails.expectedHours}
+          seconds={seconds}
+          minutes={minutes}
+          hours={hours}
+          lunchSeconds={lunchSeconds}
+          lunchMinutes={lunchMinutes}
+          lunchHours={lunchHours}
+          isCounting={isCounting}
+          isCountingLunchTime={isCountingLunchTime}
+        />
+        <Text
+          weight="bold"
+          size="2xl"
+          textAlign="center"
+          margin={{
+            vertical: "24px",
+          }}
+        >
+          Bem vindo, {jobDetails.userName}
+        </Text>
         <Box direction="row" gap="small" justify="center">
-          {isCounting ? (
-            <Button
-              size="large"
-              primary
-              color="status-error"
-              onClick={handleFinishJob}
-              label={
-                <Box
-                  justify="center"
-                  align="center"
-                  animation={["fadeIn", "slideUp"]}
-                >
-                  <Stop color="#f8f8f8" size="xlarge" />
-                  <Text size="xlarge">Finalizar</Text>
-                </Box>
-              }
-              style={{ width: 240, height: 240 }}
-            />
-          ) : (
-            <Button
-              size="large"
-              primary
-              color="brand"
-              onClick={startWorkTime}
-              label={
-                <Box
-                  justify="center"
-                  align="center"
-                  animation={["fadeIn", "slideDown"]}
-                >
-                  <Play color="#f8f8f8" size="xlarge" />
-                  <Text size="xlarge">Começar</Text>
-                </Box>
-              }
-              style={{ width: 240, height: 240 }}
-            />
-          )}
+          <JobButton
+            isCounting={isCounting}
+            handleFinishJob={handleFinishJob}
+            startWorkTime={startWorkTime}
+          />
 
-          {isCountingLunchTime ? (
-            <Button
-              size="large"
-              primary
-              color="status-error"
-              onClick={stopLunchTimer}
-              label={
-                <Box
-                  justify="center"
-                  align="center"
-                  animation={["fadeIn", "slideUp"]}
-                >
-                  <Cafeteria color="light-1" size="xlarge" />
-                  <Text color="light-1" size="xlarge">
-                    Finalizar Almoço
-                  </Text>
-                </Box>
-              }
-              style={{ width: 240, height: 240 }}
-            />
-          ) : (
-            <Button
-              size="large"
-              primary
-              color="accent-4"
-              onClick={startLunchTimer}
-              label={
-                <Box
-                  justify="center"
-                  align="center"
-                  animation={["fadeIn", "slideDown"]}
-                >
-                  <Cafeteria color="dark-2" size="xlarge" />
-                  <Text color="dark-2" size="xlarge">
-                    Começar Almoço
-                  </Text>
-                </Box>
-              }
-              style={{ width: 240, height: 240 }}
-            />
-          )}
+          <LunchButton
+            isDisable={validateLunchTime()}
+            isCountingLunchTime={isCountingLunchTime}
+            stopLunchTimer={handleFinishLunch}
+            startLunchTimer={handleSetStartLunch}
+          />
         </Box>
 
-        <Box align="center" pad="large">
-          <Table caption="Default Table">
-            <TableHeader>
-              <TableRow>
-                <TableCell>
-                  <Text>Nome</Text>
-                </TableCell>
-                <TableCell>
-                  <Text>Horário</Text>
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!!jobDetails.job.start && (
-                <TableRow>
-                  <TableCell>
-                    <Text>Início do trabalho</Text>
-                  </TableCell>
-                  <TableCell>
-                    <Text>{jobDetails.job.start}</Text>
-                  </TableCell>
-                </TableRow>
-              )}
-              {!!jobDetails.job.exit && (
-                <TableRow>
-                  <TableCell>
-                    <Text>Fim do trabalho</Text>
-                  </TableCell>
-                  <TableCell>
-                    <Text>{jobDetails.job.exit}</Text>
-                  </TableCell>
-                </TableRow>
-              )}
-              {/* <TableRow>
-                <TableCell>
-                  <Text>Fim do almoço</Text>
-                </TableCell>
-                <TableCell>
-                  <Text>13:00</Text>
-                </TableCell>
-              </TableRow> */}
-            </TableBody>
-          </Table>
-        </Box>
+        <WorkHistory
+          jobStart={jobDetails.job.start}
+          jobEnd={jobDetails.job.exit}
+          lunchStart={jobDetails.lunch.start}
+          lunchEnd={jobDetails.lunch.exit}
+        />
       </Box>
     </Box>
   );

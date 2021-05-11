@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useState } from "react";
 
 export const ModalContext = createContext([]);
 
@@ -7,25 +7,34 @@ export function ModalProvider({ children }) {
     isOpen: false,
     closeFunction: false,
     confirmFunction: false,
+    message: "",
+    type: "",
   });
 
   const handleCloseModal = useCallback(
-    () => setAlertModal({ ...alertModal, isOpen: false }),
+    (message) => setAlertModal({ ...alertModal, isOpen: false }),
     [alertModal]
   );
 
   const handleOpenModal = useCallback(
-    () => setAlertModal({ ...alertModal, isOpen: true }),
+    (message, type) =>
+      setAlertModal({ ...alertModal, isOpen: true, message, type }),
     [alertModal]
   );
 
-  const setCloseFunctionModal = useCallback((closeFunction) => {
-    return setAlertModal({ ...alertModal, closeFunction: closeFunction });
-  }, [alertModal]);
+  const setCloseFunctionModal = useCallback(
+    (closeFunction) => {
+      return setAlertModal({ ...alertModal, closeFunction: closeFunction });
+    },
+    [alertModal]
+  );
 
-  const setConfirmFunctionModal = useCallback((confirmFunction) => {
-    setAlertModal({ ...alertModal, confirmFunction });
-  }, [alertModal]);
+  const setConfirmFunctionModal = useCallback(
+    (confirmFunction) => {
+      setAlertModal({ ...alertModal, confirmFunction });
+    },
+    [alertModal]
+  );
 
   return (
     <ModalContext.Provider

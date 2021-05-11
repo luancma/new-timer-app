@@ -5,8 +5,6 @@ import { ModalContext } from "../../context/ModalContext";
 export function AlertModal() {
   const modalContext = useContext(ModalContext);
 
-  console.log({ modalContext });
-
   if (!modalContext.alertModal.isOpen) {
     return null;
   }
@@ -21,7 +19,7 @@ export function AlertModal() {
         alignSelf="center"
         pad="large"
       >
-        <Text>Você tem certeza que deseja finalizar seu expediente?</Text>
+        <Text>{modalContext.alertModal.message}</Text>
       </Box>
       <Box
         align="center"
